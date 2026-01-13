@@ -1,7 +1,9 @@
+//imports
 import { useState } from "react";
 import { searchBooks } from "./services/api";
+import placeHolder from "./assets/bookplaceholder.jpg";
 
-// Reusable BookCard component
+//reusable bookcard component, displays book info and shelf
 function BookCard({ book, currentShelf, onAddToShelf }) {
   return (
     <div
@@ -14,8 +16,9 @@ function BookCard({ book, currentShelf, onAddToShelf }) {
         alignItems: "flex-start",
       }}
     >
+      {/* thumbnail logic*/}
       <img
-        src={book.thumbnail || "https://via.placeholder.com/80x120?text=No+Image"}
+        src={book.thumbnail || placeHolder}
         alt={book.title}
         style={{
           width: "80px",
@@ -30,6 +33,7 @@ function BookCard({ book, currentShelf, onAddToShelf }) {
           {book.authors?.length ? book.authors.join(", ") : "Unknown Author"}
         </p>
 
+        {/* shelf selection dropdown */}
         <select
           value={currentShelf}
           onChange={(e) => onAddToShelf(book, e.target.value)}
@@ -49,7 +53,7 @@ function BookCard({ book, currentShelf, onAddToShelf }) {
           <option value="currentlyReading">Currently Reading</option>
           <option value="read">Read</option>
         </select>
-
+          {/* TODO shelf formatting */}
         {currentShelf && (
           <p style={{ fontSize: "0.75rem", color: "#333", marginTop: "0.25rem" }}>
             Shelf: {currentShelf.replace(/([A-Z])/g, " $1")}
@@ -61,19 +65,19 @@ function BookCard({ book, currentShelf, onAddToShelf }) {
 }
 
 function App() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [booksOnShelves, setBooksOnShelves] = useState({});
-  const [selectedShelf, setSelectedShelf] = useState("all");
+  const [query, setQuery] = useState("");                     // search query
+  const [results, setResults] = useState([]);                 // search results                
+  const [booksOnShelves, setBooksOnShelves] = useState({});   // books on shelves
+  const [selectedShelf, setSelectedShelf] = useState("all");  // selected shelf tab
 
-  // Search function
+  // search function
   const handleSearch = async () => {
     if (!query.trim()) return;
     const data = await searchBooks(query);
     setResults(data);
   };
 
-  // Add or update book on shelf
+  // add or update book on shelf function
   const handleAddToShelf = (book, shelf) => {
     setBooksOnShelves((prev) => ({
       ...prev,
@@ -81,17 +85,59 @@ function App() {
     }));
   };
 
-  return (
-    <div style={{ display: "flex", padding: "2rem", fontFamily: "sans-serif" }}>
+return (
+  <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+    {/* Top Bar */}
+    {selectedShelf === "all" && (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          marginBottom: "2rem",
+        }}
+      >
+        <input
+          type="text"
+          value={query}
+          placeholder="Search books..."
+          onChange={(e) => setQuery(e.target.value)}
+          style={{
+            padding: "0.5rem",
+            width: "300px",
+            borderRadius: "4px",
+            border: "1px solid #ccc",
+          }}
+        />
+        <button
+          onClick={handleSearch}
+          style={{
+            padding: "0.5rem 1rem",
+            borderRadius: "4px",
+            border: "1px solid #333",
+            backgroundColor: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          Search
+        </button>
+      </div>
+    )}
+
+    {/* Sidebar + Main Content */}
+    <div style={{ display: "flex" }}>
       {/* Sidebar */}
       <div style={{ width: "150px", marginRight: "2rem" }}>
-        <h2 style={{ fontSize: "1.2rem", marginBottom: "1rem" }}>My Shelves</h2>
+        <h2 style={{ fontSize: "1.2rem", marginBottom: "1rem" }}>
+          My Shelves
+        </h2>
+
         {["all", "wantToRead", "currentlyReading", "read"].map((shelf) => (
           <button
             key={shelf}
             onClick={() => {
               setSelectedShelf(shelf);
-              setResults([]); // Hide previous search when switching tabs
+              setResults([]);
             }}
             style={{
               display: "block",
@@ -100,7 +146,8 @@ function App() {
               marginBottom: "0.5rem",
               borderRadius: "4px",
               border: "1px solid #333",
-              backgroundColor: selectedShelf === shelf ? "#ddd" : "#fff",
+              backgroundColor:
+                selectedShelf === shelf ? "#ddd" : "#fff",
               cursor: "pointer",
               textTransform: "capitalize",
             }}
@@ -108,46 +155,15 @@ function App() {
             {shelf === "all"
               ? "All Books"
               : shelf
-                .replace(/([A-Z])/g, " $1") // split camelCase
-                .replace(/\b\w/g, (c) => c.toUpperCase())}
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/\b\w/g, (c) => c.toUpperCase())}
           </button>
         ))}
       </div>
 
-      {/* Main content */}
+      {/* Main Content */}
       <div style={{ flex: 1 }}>
-        {/* Search bar */}
-        {selectedShelf === "all" && (
-          <div style={{ marginBottom: "1.5rem" }}>
-            <input
-              type="text"
-              value={query}
-              placeholder="Search books..."
-              onChange={(e) => setQuery(e.target.value)}
-              style={{
-                padding: "0.5rem",
-                width: "300px",
-                marginRight: "0.5rem",
-                borderRadius: "4px",
-                border: "1px solid #ccc",
-              }}
-            />
-            <button
-              onClick={handleSearch}
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "4px",
-                border: "1px solid #333",
-                backgroundColor: "#fff",
-                cursor: "pointer",
-              }}
-            >
-              Search
-            </button>
-          </div>
-        )}
-
-        {/* Search results */}
+        {/* Search Results */}
         {results.length > 0 && selectedShelf === "all" && (
           <div style={{ marginBottom: "2rem" }}>
             <h2>Search Results</h2>
@@ -155,14 +171,17 @@ function App() {
               style={{
                 display: "grid",
                 gap: "1rem",
-                gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+                gridTemplateColumns:
+                  "repeat(auto-fill, minmax(250px, 1fr))",
               }}
             >
               {results.map((book) => (
                 <BookCard
                   key={book.id}
                   book={book}
-                  currentShelf={booksOnShelves[book.id]?.shelf || ""}
+                  currentShelf={
+                    booksOnShelves[book.id]?.shelf || ""
+                  }
                   onAddToShelf={handleAddToShelf}
                 />
               ))}
@@ -170,23 +189,27 @@ function App() {
           </div>
         )}
 
-        {/* Books on shelves */}
+        {/* Books on Shelves */}
         <div>
           <h2>
             {selectedShelf === "all"
               ? "All Books on Shelves"
               : selectedShelf.replace(/([A-Z])/g, " $1")}
           </h2>
+
           <div
             style={{
               display: "grid",
               gap: "1rem",
-              gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(250px, 1fr))",
             }}
           >
             {Object.values(booksOnShelves)
               .filter(
-                (book) => selectedShelf === "all" || book.shelf === selectedShelf
+                (book) =>
+                  selectedShelf === "all" ||
+                  book.shelf === selectedShelf
               )
               .map((book) => (
                 <BookCard
@@ -200,7 +223,8 @@ function App() {
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 export default App;
